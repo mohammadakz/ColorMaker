@@ -1,58 +1,57 @@
-//Global selections
+//Global selections and variables
 const colorDivs = document.querySelectorAll(".color");
 const generateBtn = document.querySelector(".generate");
+const clearBtn = document.querySelector(".clear");
 const sliders = document.querySelectorAll('input[type="range"]');
 const currentHexes = document.querySelectorAll(".color h2");
 const popup = document.querySelector(".copy-container");
 const adjustButton = document.querySelectorAll(".adjust");
 const lockButton = document.querySelectorAll(".lock");
 const closeAdjustments = document.querySelectorAll(".close-adjustment");
-const slidersContainers = document.querySelectorAll(".sliders");
+const sliderContainers = document.querySelectorAll(".sliders");
 let initialColors;
-
 //This is for local storage
 let savedPalettes = [];
 
-//Adding event listeners
+//Add our event listeners
 generateBtn.addEventListener("click", randomColors);
 sliders.forEach((slider) => {
   slider.addEventListener("input", hslControls);
 });
+clearBtn.addEventListener("click", () => {
+  localStorage.clear();
+});
 colorDivs.forEach((div, index) => {
   div.addEventListener("change", () => {
-    updateTextUi(index);
+    updateTextUI(index);
   });
 });
-
 currentHexes.forEach((hex) => {
   hex.addEventListener("click", () => {
     copyToClipboard(hex);
   });
 });
-
 popup.addEventListener("transitionend", () => {
   const popupBox = popup.children[0];
   popup.classList.remove("active");
   popupBox.classList.remove("active");
 });
-
 adjustButton.forEach((button, index) => {
   button.addEventListener("click", () => {
     openAdjustmentPanel(index);
   });
 });
-
 closeAdjustments.forEach((button, index) => {
   button.addEventListener("click", () => {
     closeAdjustmentPanel(index);
   });
 });
-
 lockButton.forEach((button, index) => {
   button.addEventListener("click", (e) => {
     lockLayer(e, index);
   });
 });
+
 //Functions
 //Color Generator
 function generateHex() {
@@ -149,20 +148,18 @@ function hslControls(e) {
   //Colorize inputs/sliders
   colorizeSliders(color, hue, brightness, saturation);
 }
-
-function updateTextUi(index) {
+function updateTextUI(index) {
   const activeDiv = colorDivs[index];
   const color = chroma(activeDiv.style.backgroundColor);
   const textHex = activeDiv.querySelector("h2");
   const icons = activeDiv.querySelectorAll(".controls button");
   textHex.innerText = color.hex();
-  //Check contrast
+  //Check Contrast
   checkTextContrast(color, textHex);
   for (icon of icons) {
     checkTextContrast(color, icon);
   }
 }
-
 function resetInputs() {
   const sliders = document.querySelectorAll(".sliders input");
   sliders.forEach((slider) => {
@@ -173,38 +170,34 @@ function resetInputs() {
     }
     if (slider.name === "brightness") {
       const brightColor = initialColors[slider.getAttribute("data-bright")];
-      const BrightValue = chroma(brightColor).hsl()[2];
-      slider.value = Math.floor(BrightValue * 100) / 100;
+      const brightValue = chroma(brightColor).hsl()[2];
+      slider.value = Math.floor(brightValue * 100) / 100;
     }
     if (slider.name === "saturation") {
-      const satColro = initialColors[slider.getAttribute("data-sat")];
-      const satValue = chroma(satColro).hsl()[1];
+      const satColor = initialColors[slider.getAttribute("data-sat")];
+      const satValue = chroma(satColor).hsl()[1];
       slider.value = Math.floor(satValue * 100) / 100;
     }
   });
 }
-
 function copyToClipboard(hex) {
-  const element = document.createElement("textarea");
-  element.value = hex.innerText;
-  document.body.appendChild(element);
-  element.select();
+  const el = document.createElement("textarea");
+  el.value = hex.innerText;
+  document.body.appendChild(el);
+  el.select();
   document.execCommand("copy");
-  document.body.removeChild(element);
+  document.body.removeChild(el);
   //Pop up animation
   const popupBox = popup.children[0];
   popup.classList.add("active");
   popupBox.classList.add("active");
 }
-
 function openAdjustmentPanel(index) {
-  slidersContainers[index].classList.toggle("active");
+  sliderContainers[index].classList.toggle("active");
 }
-
 function closeAdjustmentPanel(index) {
-  slidersContainers[index].classList.remove("active");
+  sliderContainers[index].classList.remove("active");
 }
-
 function lockLayer(e, index) {
   const lockSVG = e.target.children[0];
   const activeBg = colorDivs[index];
@@ -217,22 +210,21 @@ function lockLayer(e, index) {
   }
 }
 
-//Implement save to palette and local storage
+//Implement Save to palette and LOCAL STORAGE STUFF
 const saveBtn = document.querySelector(".save");
 const submitSave = document.querySelector(".submit-save");
 const closeSave = document.querySelector(".close-save");
 const saveContainer = document.querySelector(".save-container");
 const saveInput = document.querySelector(".save-container input");
 const libraryContainer = document.querySelector(".library-container");
-const LibraryBtn = document.querySelector(".library");
+const libraryBtn = document.querySelector(".library");
 const closeLibraryBtn = document.querySelector(".close-library");
 
-//Event listeners
-
+//Event Listeners
 saveBtn.addEventListener("click", openPalette);
 closeSave.addEventListener("click", closePalette);
 submitSave.addEventListener("click", savePalette);
-LibraryBtn.addEventListener("click", openLibrary);
+libraryBtn.addEventListener("click", openLibrary);
 closeLibraryBtn.addEventListener("click", closeLibrary);
 
 function openPalette(e) {
@@ -240,13 +232,11 @@ function openPalette(e) {
   saveContainer.classList.add("active");
   popup.classList.add("active");
 }
-
 function closePalette(e) {
   const popup = saveContainer.children[0];
   saveContainer.classList.remove("active");
-  popup.classList.remove("active");
+  popup.classList.add("remove");
 }
-
 function savePalette(e) {
   saveContainer.classList.remove("active");
   popup.classList.remove("active");
@@ -255,12 +245,27 @@ function savePalette(e) {
   currentHexes.forEach((hex) => {
     colors.push(hex.innerText);
   });
-  //Generate Objetc
-  let paletteNr = savedPalettes.length;
-  const paletteObj = { name: name, colors, nr: paletteNr };
+  //Generate Object
+  //*1
+  // const paletteObjects = JSON.parse(localStorage.getItem("palettes"));
+  // let paletteNr;
+  // if (paletteObjects) {
+  //   paletteNr = paletteObjects.length;
+  // } else {
+  //   paletteNr = savedPalettes.length;
+  // }
+
+  let paletteNr;
+  const paletteObjects = JSON.parse(localStorage.getItem("palettes"));
+  if (paletteObjects) {
+    paletteNr = paletteObjects.length;
+  } else {
+    paletteNr = savedPalettes.length;
+  }
+
+  const paletteObj = { name, colors, nr: paletteNr };
   savedPalettes.push(paletteObj);
-  console.log(savedPalettes);
-  //Save to localstorage
+  //Save to localStorage
   savetoLocal(paletteObj);
   saveInput.value = "";
   //Generate the palette for Library
@@ -280,33 +285,99 @@ function savePalette(e) {
   paletteBtn.classList.add(paletteObj.nr);
   paletteBtn.innerText = "Select";
 
-  //Append to library
+  //Attach event to the btn
+  paletteBtn.addEventListener("click", (e) => {
+    closeLibrary();
+    const paletteIndex = e.target.classList[1];
+    initialColors = [];
+    savedPalettes[paletteIndex].colors.forEach((color, index) => {
+      initialColors.push(color);
+      colorDivs[index].style.backgroundColor = color;
+      const text = colorDivs[index].children[0];
+      checkTextContrast(color, text);
+      updateTextUI(index);
+    });
+    resetInputs();
+  });
+
+  //Append to Library
   palette.appendChild(title);
   palette.appendChild(preview);
   palette.appendChild(paletteBtn);
   libraryContainer.children[0].appendChild(palette);
 }
 
-function savetoLocal(paletObject) {
-  let localPalletes;
+function savetoLocal(paletteObj) {
+  let localPalettes;
   if (localStorage.getItem("palettes") === null) {
-    localPalletes = [];
+    localPalettes = [];
   } else {
-    localPalletes = JSON.parse(localStorage.getItem("palettes"));
+    localPalettes = JSON.parse(localStorage.getItem("palettes"));
   }
-  localPalletes.push(paletObject);
-  localStorage.setItem("palettes", JSON.stringify(localPalletes));
+  localPalettes.push(paletteObj);
+  localStorage.setItem("palettes", JSON.stringify(localPalettes));
 }
-
 function openLibrary() {
   const popup = libraryContainer.children[0];
   libraryContainer.classList.add("active");
   popup.classList.add("active");
 }
-
 function closeLibrary() {
   const popup = libraryContainer.children[0];
   libraryContainer.classList.remove("active");
   popup.classList.remove("active");
 }
+
+function getLocal() {
+  if (localStorage.getItem("palettes") === null) {
+    //Local Palettes
+    localPalettes = [];
+  } else {
+    const paletteObjects = JSON.parse(localStorage.getItem("palettes"));
+    // *2
+
+    savedPalettes = [...paletteObjects];
+    paletteObjects.forEach((paletteObj) => {
+      //Generate the palette for Library
+      const palette = document.createElement("div");
+      palette.classList.add("custom-palette");
+      const title = document.createElement("h4");
+      title.innerText = paletteObj.name;
+      const preview = document.createElement("div");
+      preview.classList.add("small-preview");
+      paletteObj.colors.forEach((smallColor) => {
+        const smallDiv = document.createElement("div");
+        smallDiv.style.backgroundColor = smallColor;
+        preview.appendChild(smallDiv);
+      });
+      const paletteBtn = document.createElement("button");
+      paletteBtn.classList.add("pick-palette-btn");
+      paletteBtn.classList.add(paletteObj.nr);
+      paletteBtn.innerText = "Select";
+
+      //Attach event to the btn
+      paletteBtn.addEventListener("click", (e) => {
+        closeLibrary();
+        const paletteIndex = e.target.classList[1];
+        initialColors = [];
+        paletteObjects[paletteIndex].colors.forEach((color, index) => {
+          initialColors.push(color);
+          colorDivs[index].style.backgroundColor = color;
+          const text = colorDivs[index].children[0];
+          checkTextContrast(color, text);
+          updateTextUI(index);
+        });
+        resetInputs();
+      });
+
+      //Append to Library
+      palette.appendChild(title);
+      palette.appendChild(preview);
+      palette.appendChild(paletteBtn);
+      libraryContainer.children[0].appendChild(palette);
+    });
+  }
+}
+
+getLocal();
 randomColors();
